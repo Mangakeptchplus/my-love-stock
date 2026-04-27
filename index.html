@@ -67,20 +67,22 @@
             margin-bottom: 20px;
         }
 
-        /* ตกแต่งโลโก้วงกลม */
-        .stock-logo {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #fff;
-            margin-right: 15px;
-            object-fit: contain;
-            border: 2px solid #333;
-        }
-
         .symbol-info {
             display: flex;
             align-items: center;
+        }
+
+        /* ตกแต่งโลโก้วงกลมให้ชัดขึ้น */
+        .stock-logo {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background-color: #fff;
+            margin-right: 18px;
+            object-fit: contain; /* ปรับให้รูปอยู่ตรงกลางไม่บิดเบี้ยว */
+            padding: 5px; /* เว้นขอบในให้รูปไม่ชิดขอบวงกลมเกินไป */
+            border: 2px solid #333;
+            box-sizing: border-box;
         }
 
         .symbol-name { font-size: 28px; font-weight: bold; color: var(--accent-green); line-height: 1.1; }
@@ -134,7 +136,7 @@
 </div>
 
 <script>
-    // เพิ่ม domain เพื่อใช้ดึงโลโก้ครับ
+    // ปรับ Domain ให้ตรงกับแหล่งที่เก็บ Logo ของแต่ละบริษัท
     const MY_PORTFOLIO = [
         { symbol: "NVDA", shares: 0.0742317, cost: 15.11, domain: "nvidia.com" },
         { symbol: "MSFT", shares: 0.0072341, cost: 3.07, domain: "microsoft.com" },
@@ -177,11 +179,14 @@
             totalUSDValue += currentValue;
             totalCostAmount += costAmount;
 
+            // ใช้ Google Logo API ซึ่งเสถียรกว่ามาก
+            const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${stock.domain}`;
+
             htmlContent += `
                 <div class="stock-item">
                     <div class="stock-header">
                         <div class="symbol-info">
-                            <img class="stock-logo" src="https://logo.clearbit.com/${stock.domain}" onerror="this.src='https://ui-avatars.com/api/?name=${stock.symbol}&background=00ff41&color=fff'">
+                            <img class="stock-logo" src="${logoUrl}" alt="${stock.symbol}">
                             <div>
                                 <div class="symbol-name">${stock.symbol}</div>
                                 <small>${stock.shares} หุ้น | เงินต้น $${stock.cost}</small>
