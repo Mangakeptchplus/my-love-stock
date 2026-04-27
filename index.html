@@ -6,87 +6,88 @@
     <title>My Love Stock 📈</title>
     <script src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        body { 
-            background-color: #0d0d0d; 
-            color: #f1f1f1; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex;
-            justify-content: center;
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #1a1a1a;
+            --accent-green: #00ff41;
+            --accent-red: #ff4141;
+            --text-main: #f1f1f1;
+            --text-dim: #888;
         }
 
-        /* Container หลักปรับให้ยืดหยุ่น */
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .app-container { 
             width: 100%;
-            max-width: 1200px; /* ขยายความกว้างสูงสุดของเว็บ */
+            max-width: 800px; /* ปรับความกว้างให้พอดีสายตา ไม่บานเกินไป */
         }
 
-        /* ส่วนหัวพอร์ต */
+        /* ส่วนหัวพอร์ต - ปรับให้เด่นชัด */
         .header-card { 
-            background: #1a1a1a; 
-            padding: 25px; 
-            border-radius: 20px; 
-            margin-bottom: 25px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 500px; /* ให้ส่วนหัวไม่กว้างเกินไปเพื่อความสวยงาม */
-            margin-left: auto;
-            margin-right: auto;
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 24px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #222;
         }
 
-        .total-val { font-size: clamp(28px, 5vw, 42px); font-weight: bold; margin: 5px 0; color: #ffffff; }
-        .summary-row { display: flex; justify-content: space-between; background: #111; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .total-val { font-size: 48px; font-weight: 800; margin: 10px 0; letter-spacing: -1px; }
+        .summary-row { display: flex; justify-content: space-between; background: #111; padding: 20px; border-radius: 16px; margin-top: 20px; }
 
-        /* การจัดเลย์เอาต์รายการหุ้น (Grid System) */
+        /* รายการหุ้น - เน้น 1 แถวต่อ 1 หุ้น */
         #stock-list {
-            display: grid;
-            grid-template-columns: 1fr; /* มือถือแสดง 1 คอลัมน์ */
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* เพิ่มระยะห่างระหว่างตัว */
             width: 100%;
-        }
-
-        /* เมื่อหน้าจอกว้างกว่า 800px (เช่น Tablet/PC) ให้แบ่งเป็น 2 คอลัมน์ */
-        @media (min-width: 800px) {
-            #stock-list {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* เมื่อหน้าจอกว้างกว่า 1200px ให้แบ่งเป็น 3 คอลัมน์ */
-        @media (min-width: 1200px) {
-            #stock-list {
-                grid-template-columns: repeat(3, 1fr);
-            }
         }
 
         .stock-item { 
-            background: #1a1a1a; 
-            padding: 18px; 
-            border-radius: 15px; 
-            border: 1px solid #333; 
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s;
-        }
-        
-        .stock-item:hover {
-            transform: translateY(-5px);
-            border-color: #00ff41;
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 24px; 
+            border: 1px solid #333;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        .profit { color: #00ff41; } 
-        .loss { color: #ff4141; }
-        
-        .chart-container { 
-            height: 250px; 
-            margin-top: 15px; 
-            border-radius: 10px; 
-            overflow: hidden; 
-            border: 1px solid #333; 
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
+
+        .symbol-name { font-size: 24px; font-weight: bold; color: var(--accent-green); }
+        .price-info { text-align: right; }
+        .current-price { font-size: 22px; font-weight: bold; }
+
+        /* ปรับขนาดกราฟให้ใหญ่และเต็มตา */
+        .chart-container { 
+            height: 400px; /* เพิ่มความสูงกราฟ */
+            width: 100%;
+            border-radius: 16px; 
+            overflow: hidden; 
+            border: 1px solid #222;
+            background: #000;
+        }
+
+        .profit { color: var(--accent-green); } 
+        .loss { color: var(--accent-red); }
+        h3 { font-size: 22px; margin-left: 10px; }
+        small { color: var(--text-dim); font-size: 14px; }
         
-        h2, h3 { margin-top: 0; }
-        small { color: #888; font-size: 12px; }
+        /* ซ่อน Scrollbar ของ TradingView เล็กน้อยเพื่อความคลีน */
+        iframe { border-radius: 16px; }
     </style>
 </head>
 <body>
@@ -96,20 +97,19 @@
         <h3>สินทรัพย์ของฉัน</h3>
         <small>มูลค่าสินทรัพย์ทั้งหมด (USD)</small>
         <div class="total-val" id="total-usd">$0.00</div>
-        <div id="total-thb" style="color: #888; font-size: 16px;">฿0.00 THB</div>
+        <div id="total-thb" style="color: var(--text-dim); font-size: 18px;">฿0.00 THB</div>
         
         <div class="summary-row">
-            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit" style="font-weight:bold;">+0.00%</div></div>
-            <div><small>กำไร (USD)</small><div id="total-profit" class="profit" style="font-weight:bold;">+$0.00</div></div>
+            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit" style="font-size: 20px; font-weight:bold;">+0.00%</div></div>
+            <div><small>กำไร (USD)</small><div id="total-profit" class="profit" style="font-size: 20px; font-weight:bold;">+$0.00</div></div>
         </div>
     </div>
 
-    <h3 style="margin-bottom: 20px;">รายการสินทรัพย์</h3>
+    <h3>รายการสินทรัพย์</h3>
     <div id="stock-list"></div>
 </div>
 
 <script>
-    // --- หลังบ้าน (เหมือนเดิม) ---
     const MY_PORTFOLIO = [
         { symbol: "NVDA", name: "NVIDIA", shares: 0.1, cost: 120.50 },
         { symbol: "MSFT", name: "Microsoft", shares: 0.05, cost: 405.00 },
@@ -143,14 +143,14 @@
 
             list.innerHTML += `
                 <div class="stock-item">
-                    <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+                    <div class="stock-header">
                         <div>
-                            <strong style="font-size:18px; color:#00ff41;">${stock.symbol}</strong><br>
+                            <div class="symbol-name">${stock.symbol}</div>
                             <small>${stock.shares} หุ้น | ต้นทุน $${stock.cost}</small>
                         </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:18px; font-weight:bold;">$${value.toFixed(2)}</div>
-                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-size: 14px; font-weight:bold;">
+                        <div class="price-info">
+                            <div class="current-price">$${value.toFixed(2)}</div>
+                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-weight:bold;">
                                 ${pc >= 0 ? '↗' : '↘'} ${Math.abs(pc).toFixed(2)}% ($${profit.toFixed(2)})
                             </div>
                         </div>
@@ -162,22 +162,33 @@
             `;
         });
 
+        // สรุปยอดรวม
         const totalProfit = totalUSD - totalCost;
         const totalPC = (totalProfit / totalCost) * 100;
         document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
         document.getElementById('total-thb').innerText = `฿${(totalUSD * USD_THB_RATE).toLocaleString()} THB`;
         document.getElementById('total-profit').innerText = `$${totalProfit.toFixed(2)}`;
         document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
+        
         document.getElementById('total-profit').className = totalProfit >= 0 ? 'profit' : 'loss';
         document.getElementById('total-pc').className = totalProfit >= 0 ? 'profit' : 'loss';
 
-        // โหลดกราฟ
+        // โหลดกราฟแบบปรับแต่งให้โหลดไวขึ้น
         MY_PORTFOLIO.forEach(stock => {
             new TradingView.widget({
-                "width": "100%", "height": "100%", "symbol": "NASDAQ:" + stock.symbol,
-                "interval": "D", "theme": "dark", "style": "1", "locale": "th",
-                "container_id": `w-${stock.symbol}`, "enable_publishing": false,
-                "hide_top_toolbar": true, "hide_legend": true, "save_image": false
+                "autosize": true,
+                "symbol": "NASDAQ:" + stock.symbol,
+                "interval": "D",
+                "timezone": "Asia/Bangkok",
+                "theme": "dark",
+                "style": "1",
+                "locale": "th",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": true,
+                "hide_legend": true,
+                "save_image": false,
+                "container_id": `w-${stock.symbol}`
             });
         });
     }
