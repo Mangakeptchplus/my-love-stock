@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio with TradingView Charts 📈</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="row header-title">
+                <h1>สินทรัพย์ของฉัน</h1>
+            </div>
+            <div class="row total-value-panel">
+                <p>มูลค่าสินทรัพย์ทั้งหมด (USD)</p>
+                <div class="total-value-display">
+                    <span id="total-usd">$0.00</span>
+                    <p id="total-thb">฿0.00</p>
+                </div>
+            </div>
+            <div class="row summary-panel">
+                <div class="summary-item">
+                    <span>% เปลี่ยนแปลง</span>
+                    <p id="total-percent-display">+0.00%</p>
+                </div>
+                <div class="summary-item">
+                    <span>กำไร (USD)</span>
+                    <p id="total-profit-display">+$0.00</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="portfolio-list">
+            <div class="list-header">
+                <h2>รายการสินทรัพย์</h2>
+            </div>
+            <div id="stock-items-container">
+                </div>
+        </section>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
