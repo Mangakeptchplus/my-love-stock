@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Love Stock 📈</title>
+    <title>My Love Stock 📈 - Live Dashboard</title>
     <script src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root {
@@ -18,7 +18,7 @@
         body { 
             background-color: var(--bg-color); 
             color: var(--text-main); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
             margin: 0; 
             padding: 15px;
             display: flex;
@@ -26,154 +26,160 @@
             align-items: center;
         }
 
-        .app-container { 
-            width: 100%;
-            max-width: 800px; /* ปรับความกว้างให้พอดีสายตา ไม่บานเกินไป */
-        }
+        .app-container { width: 100%; max-width: 900px; }
 
-        /* ส่วนหัวพอร์ต - ปรับให้เด่นชัด */
+        /* ส่วนหัวพอร์ต */
         .header-card { 
             background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 24px; 
+            padding: 35px; 
+            border-radius: 28px; 
             margin-bottom: 30px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
             border: 1px solid #222;
+            text-align: center;
         }
 
-        .total-val { font-size: 48px; font-weight: 800; margin: 10px 0; letter-spacing: -1px; }
-        .summary-row { display: flex; justify-content: space-between; background: #111; padding: 20px; border-radius: 16px; margin-top: 20px; }
+        .total-val { font-size: clamp(40px, 8vw, 60px); font-weight: 800; margin: 10px 0; letter-spacing: -2px; }
+        .summary-row { display: flex; justify-content: space-around; background: #111; padding: 20px; border-radius: 20px; margin-top: 25px; }
 
-        /* รายการหุ้น - เน้น 1 แถวต่อ 1 หุ้น */
-        #stock-list {
-            display: flex;
-            flex-direction: column;
-            gap: 25px; /* เพิ่มระยะห่างระหว่างตัว */
-            width: 100%;
-        }
+        /* รายการหุ้น */
+        #stock-list { display: flex; flex-direction: column; gap: 30px; width: 100%; }
 
         .stock-item { 
             background: var(--card-bg); 
-            padding: 20px; 
-            border-radius: 24px; 
+            padding: 25px; 
+            border-radius: 28px; 
             border: 1px solid #333;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.4);
         }
 
         .stock-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 20px;
         }
 
-        .symbol-name { font-size: 24px; font-weight: bold; color: var(--accent-green); }
+        .symbol-name { font-size: 28px; font-weight: bold; color: var(--accent-green); }
         .price-info { text-align: right; }
-        .current-price { font-size: 22px; font-weight: bold; }
+        .current-price { font-size: 24px; font-weight: bold; }
 
-        /* ปรับขนาดกราฟให้ใหญ่และเต็มตา */
         .chart-container { 
-            height: 400px; /* เพิ่มความสูงกราฟ */
+            height: 450px; /* กราฟใหญ่สะใจ */
             width: 100%;
-            border-radius: 16px; 
+            border-radius: 20px; 
             overflow: hidden; 
             border: 1px solid #222;
             background: #000;
+            margin-top: 20px;
         }
 
         .profit { color: var(--accent-green); } 
         .loss { color: var(--accent-red); }
-        h3 { font-size: 22px; margin-left: 10px; }
+        h3 { font-size: 24px; margin-bottom: 20px; align-self: flex-start; }
         small { color: var(--text-dim); font-size: 14px; }
-        
-        /* ซ่อน Scrollbar ของ TradingView เล็กน้อยเพื่อความคลีน */
-        iframe { border-radius: 16px; }
+        .status-tag { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: #333; margin-top: 10px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header-card">
-        <h3>สินทรัพย์ของฉัน</h3>
-        <small>มูลค่าสินทรัพย์ทั้งหมด (USD)</small>
+        <h3>สินทรัพย์ของฉัน <span id="update-status" class="status-tag">กำลังโหลดราคาสด...</span></h3>
+        <small>มูลค่าสินทรัพย์รวม (USD)</small>
         <div class="total-val" id="total-usd">$0.00</div>
-        <div id="total-thb" style="color: var(--text-dim); font-size: 18px;">฿0.00 THB</div>
+        <div id="total-thb" style="color: var(--text-dim); font-size: 20px; margin-top: 5px;">฿0.00 THB</div>
         
         <div class="summary-row">
-            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit" style="font-size: 20px; font-weight:bold;">+0.00%</div></div>
-            <div><small>กำไร (USD)</small><div id="total-profit" class="profit" style="font-size: 20px; font-weight:bold;">+$0.00</div></div>
+            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit" style="font-size: 24px; font-weight:bold;">+0.00%</div></div>
+            <div><small>กำไร/ขาดทุน (USD)</small><div id="total-profit" class="profit" style="font-size: 24px; font-weight:bold;">+$0.00</div></div>
         </div>
     </div>
 
-    <h3>รายการสินทรัพย์</h3>
+    <h3 style="margin-left: 10px;">รายการสินทรัพย์ (รายตัว)</h3>
     <div id="stock-list"></div>
 </div>
 
 <script>
+    // --- 1. ข้อมูลหุ้นและต้นทุนของคุณ (แก้จำนวนหุ้นและต้นทุนตรงนี้) ---
     const MY_PORTFOLIO = [
-        { symbol: "NVDA", name: "NVIDIA", shares: 0.1, cost: 120.50 },
-        { symbol: "MSFT", name: "Microsoft", shares: 0.05, cost: 405.00 },
-        { symbol: "AAPL", name: "Apple", shares: 0.1, cost: 172.00 },
-        { symbol: "AMZN", name: "Amazon", shares: 0.08, cost: 178.50 },
-        { symbol: "ALAB", name: "Astera Labs", shares: 0.2, cost: 80.00 }
+        { symbol: "NVDA", shares: 0.1, cost: 120.50 },
+        { symbol: "MSFT", shares: 0.05, cost: 405.00 },
+        { symbol: "AAPL", shares: 0.1, cost: 172.00 },
+        { symbol: "AMZN", shares: 0.08, cost: 178.50 },
+        { symbol: "ALAB", shares: 0.2, cost: 80.00 }
     ];
 
-    const CURRENT_PRICES = {
-        "NVDA": 880.20, "MSFT": 420.10, "AAPL": 175.50, "AMZN": 185.00, "ALAB": 98.00
-    };
-
+    const API_KEY = 'd7npjg1r01qm3637bb2gd7npjg1r01qm3637bb30';
     const USD_THB_RATE = 32.30;
 
-    function render() {
+    // ฟังก์ชันดึงราคาสด
+    async function getPrice(symbol) {
+        try {
+            const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`);
+            const data = await response.json();
+            return data.c; // ราคาปัจจุบัน
+        } catch (e) {
+            console.error("Fetch error:", e);
+            return null;
+        }
+    }
+
+    async function updatePortfolio() {
         const list = document.getElementById('stock-list');
+        const status = document.getElementById('update-status');
+        
         let totalUSD = 0;
         let totalCost = 0;
+        let htmlContent = "";
 
-        list.innerHTML = ""; 
+        // ดึงราคาสดทีละตัว
+        for (const stock of MY_PORTFOLIO) {
+            const currentPrice = await getPrice(stock.symbol);
+            if (!currentPrice) continue;
 
-        MY_PORTFOLIO.forEach(stock => {
-            const price = CURRENT_PRICES[stock.symbol] || 0;
-            const value = price * stock.shares;
+            const value = currentPrice * stock.shares;
             const costTotal = stock.cost * stock.shares;
             const profit = value - costTotal;
-            const pc = ((price - stock.cost) / stock.cost) * 100;
+            const pc = ((currentPrice - stock.cost) / stock.cost) * 100;
 
             totalUSD += value;
             totalCost += costTotal;
 
-            list.innerHTML += `
+            htmlContent += `
                 <div class="stock-item">
                     <div class="stock-header">
                         <div>
                             <div class="symbol-name">${stock.symbol}</div>
-                            <small>${stock.shares} หุ้น | ต้นทุน $${stock.cost}</small>
+                            <small>${stock.shares} หุ้น | ต้นทุนเฉลี่ย $${stock.cost}</small>
                         </div>
                         <div class="price-info">
                             <div class="current-price">$${value.toFixed(2)}</div>
-                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-weight:bold;">
+                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-weight:bold; font-size: 16px;">
                                 ${pc >= 0 ? '↗' : '↘'} ${Math.abs(pc).toFixed(2)}% ($${profit.toFixed(2)})
                             </div>
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <div id="w-${stock.symbol}" style="height:100%;"></div>
-                    </div>
+                    <div class="chart-container" id="container-${stock.symbol}">
+                        </div>
                 </div>
             `;
-        });
+        }
 
-        // สรุปยอดรวม
+        list.innerHTML = htmlContent;
+
+        // อัปเดตส่วนสรุปยอด
         const totalProfit = totalUSD - totalCost;
         const totalPC = (totalProfit / totalCost) * 100;
         document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
         document.getElementById('total-thb').innerText = `฿${(totalUSD * USD_THB_RATE).toLocaleString()} THB`;
-        document.getElementById('total-profit').innerText = `$${totalProfit.toFixed(2)}`;
+        document.getElementById('total-profit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
         document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
         
         document.getElementById('total-profit').className = totalProfit >= 0 ? 'profit' : 'loss';
         document.getElementById('total-pc').className = totalProfit >= 0 ? 'profit' : 'loss';
 
-        // โหลดกราฟแบบปรับแต่งให้โหลดไวขึ้น
+        // โหลดกราฟ TradingView
         MY_PORTFOLIO.forEach(stock => {
             new TradingView.widget({
                 "autosize": true,
@@ -183,17 +189,22 @@
                 "theme": "dark",
                 "style": "1",
                 "locale": "th",
-                "toolbar_bg": "#f1f3f6",
                 "enable_publishing": false,
                 "hide_top_toolbar": true,
                 "hide_legend": true,
                 "save_image": false,
-                "container_id": `w-${stock.symbol}`
+                "container_id": `container-${stock.symbol}`
             });
         });
+
+        status.innerText = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString();
     }
 
-    render();
+    // เริ่มทำงานครั้งแรก
+    updatePortfolio();
+
+    // ตั้งเวลาอัปเดตทุก 60 วินาที (เพื่อไม่ให้ API Key โดนบล็อก)
+    setInterval(updatePortfolio, 60000);
 </script>
 
 </body>
