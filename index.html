@@ -3,41 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Portfolio 📈</title>
+    <title>My Love Stock 📈</title>
     <script src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        /* CSS ตกแต่งสีเขียว-ดำ ตามภาพที่คุณต้องการ */
-        body { background-color: #0d0d0d; color: #f1f1f1; font-family: sans-serif; margin: 0; padding: 20px; }
-        .app-container { max-width: 500px; margin: auto; }
-        .header-card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: left; }
-        .total-val { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .summary-row { display: flex; justify-content: space-between; background: #111; padding: 10px; border-radius: 10px; }
-        .stock-item { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #333; }
+        body { background-color: #0d0d0d; color: #f1f1f1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .app-container { max-width: 450px; margin: auto; }
+        .header-card { background: #1a1a1a; padding: 25px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .total-val { font-size: 36px; font-weight: bold; margin: 5px 0; color: #ffffff; }
+        .summary-row { display: flex; justify-content: space-between; background: #111; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .stock-item { background: #1a1a1a; padding: 18px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #333; }
         .profit { color: #00ff41; } .loss { color: #ff4141; }
-        .chart-btn { background: none; border: 1px solid #00ff41; color: #00ff41; padding: 8px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .chart-container { height: 300px; display: none; margin-top: 10px; }
+        .chart-btn { background: #111; border: 1px solid #00ff41; color: #00ff41; padding: 10px; width: 100%; border-radius: 10px; cursor: pointer; margin-top: 12px; font-weight: bold; }
+        .chart-container { height: 320px; display: none; margin-top: 12px; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+        h2, h3 { margin-top: 0; }
+        small { color: #888; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header-card">
-        <h2>สินทรัพย์ของฉัน</h2>
-        <p style="color: #888;">มูลค่าสินทรัพย์ทั้งหมด (USD)</p>
+        <h3>สินทรัพย์ของฉัน</h3>
+        <small>มูลค่าสินทรัพย์ทั้งหมด (USD)</small>
         <div class="total-val" id="total-usd">$0.00</div>
-        <div id="total-thb" style="color: #888; margin-bottom: 15px;">฿0.00 THB</div>
+        <div id="total-thb" style="color: #888; font-size: 16px;">฿0.00 THB</div>
+        
         <div class="summary-row">
-            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit">+0.00%</div></div>
-            <div><small>กำไร (USD)</small><div id="total-profit" class="profit">+$0.00</div></div>
+            <div><small>% เปลี่ยนแปลง</small><div id="total-pc" class="profit" style="font-weight:bold;">+0.00%</div></div>
+            <div><small>กำไร (USD)</small><div id="total-profit" class="profit" style="font-weight:bold;">+$0.00</div></div>
         </div>
     </div>
 
-    <h3>รายการสินทรัพย์</h3>
+    <h3 style="margin-left: 5px;">รายการสินทรัพย์</h3>
     <div id="stock-list"></div>
 </div>
 
 <script>
-    // --- หลังบ้าน: แก้ไขข้อมูลหุ้นตรงนี้ได้เลย ---
+    // ==========================================
+    // 1. หลังบ้าน: แก้ไขข้อมูลหุ้นของคุณตรงนี้ได้เลย
+    // ==========================================
     const MY_PORTFOLIO = [
         { symbol: "NVDA", name: "NVIDIA", shares: 0.1, cost: 120.50 },
         { symbol: "MSFT", name: "Microsoft", shares: 0.05, cost: 405.00 },
@@ -46,16 +50,19 @@
         { symbol: "ALAB", name: "Astera Labs", shares: 0.2, cost: 80.00 }
     ];
 
+    // 2. ราคาปัจจุบัน (แก้ไขเลขตรงนี้เพื่ออัปเดตราคา)
     const CURRENT_PRICES = {
         "NVDA": 880.20, "MSFT": 420.10, "AAPL": 175.50, "AMZN": 185.00, "ALAB": 98.00
     };
 
-    const USD_THB = 32.30;
+    const USD_THB_RATE = 32.30; // อัตราแลกเปลี่ยน
 
     function render() {
         const list = document.getElementById('stock-list');
         let totalUSD = 0;
         let totalCost = 0;
+
+        list.innerHTML = ""; // ล้างค่าเก่า
 
         MY_PORTFOLIO.forEach(stock => {
             const price = CURRENT_PRICES[stock.symbol] || 0;
@@ -69,14 +76,19 @@
 
             list.innerHTML += `
                 <div class="stock-item">
-                    <div style="display:flex; justify-content:space-between;">
-                        <div><strong>${stock.symbol}</strong><br><small>${stock.shares} หุ้น</small></div>
+                    <div style="display:flex; justify-content:space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size:18px; color:#00ff41;">${stock.symbol}</strong><br>
+                            <small>${stock.shares} หุ้น | ต้นทุน $${stock.cost}</small>
+                        </div>
                         <div style="text-align:right;">
-                            <strong>$${value.toFixed(2)}</strong><br>
-                            <span class="${profit >= 0 ? 'profit' : 'loss'}">${pc.toFixed(2)}% ($${profit.toFixed(2)})</span>
+                            <div style="font-size:18px; font-weight:bold;">$${value.toFixed(2)}</div>
+                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-size: 14px; font-weight:bold;">
+                                ${pc >= 0 ? '↗' : '↘'} ${Math.abs(pc).toFixed(2)}% ($${profit.toFixed(2)})
+                            </div>
                         </div>
                     </div>
-                    <button class="chart-btn" onclick="toggleChart('${stock.symbol}')">ดูกราฟ</button>
+                    <button class="chart-btn" onclick="toggleChart('${stock.symbol}')">ดูกราฟ TradingView</button>
                     <div id="c-${stock.symbol}" class="chart-container">
                         <div id="w-${stock.symbol}" style="height:100%;"></div>
                     </div>
@@ -85,21 +97,28 @@
         });
 
         const totalProfit = totalUSD - totalCost;
+        const totalPC = (totalProfit / totalCost) * 100;
+
         document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
-        document.getElementById('total-thb').innerText = `฿${(totalUSD * USD_THB).toLocaleString()} THB`;
+        document.getElementById('total-thb').innerText = `฿${(totalUSD * USD_THB_RATE).toLocaleString()} THB`;
         document.getElementById('total-profit').innerText = `$${totalProfit.toFixed(2)}`;
-        document.getElementById('total-pc').innerText = `${((totalProfit/totalCost)*100).toFixed(2)}%`;
+        document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
+        
+        // เปลี่ยนสีตามกำไร/ขาดทุน
+        document.getElementById('total-profit').className = totalProfit >= 0 ? 'profit' : 'loss';
+        document.getElementById('total-pc').className = totalProfit >= 0 ? 'profit' : 'loss';
     }
 
     function toggleChart(sym) {
         const div = document.getElementById(`c-${sym}`);
         const isShow = div.style.display === 'block';
         div.style.display = isShow ? 'none' : 'block';
+        
         if(!isShow) {
             new TradingView.widget({
-                "width": "100%", "height": "100%", "symbol": sym,
+                "width": "100%", "height": "100%", "symbol": "NASDAQ:" + sym,
                 "interval": "D", "theme": "dark", "style": "1", "locale": "th",
-                "container_id": `w-${sym}`
+                "container_id": `w-${sym}`, "enable_publishing": false, "hide_top_toolbar": true, "save_image": false
             });
         }
     }
