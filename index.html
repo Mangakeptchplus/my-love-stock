@@ -32,7 +32,7 @@
             background: var(--card-bg); 
             padding: 35px; 
             border-radius: 28px; 
-            margin-bottom: 30px; 
+            margin-bottom: 20px; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.6);
             border: 1px solid #222;
             text-align: center;
@@ -48,6 +48,32 @@
             border-radius: 20px; 
             margin-top: 25px; 
             gap: 10px;
+        }
+
+        /* ส่วนควบคุมการเรียงลำดับ */
+        .sort-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .sort-btn {
+            background: #222;
+            color: var(--text-dim);
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .sort-btn.active {
+            background: var(--accent-green);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--accent-green);
         }
 
         #stock-list { display: flex; flex-direction: column; gap: 30px; width: 100%; }
@@ -67,20 +93,15 @@
             margin-bottom: 20px;
         }
 
-        .symbol-info {
-            display: flex;
-            align-items: center;
-        }
+        .symbol-info { display: flex; align-items: center; }
 
-        /* ตกแต่งโลโก้วงกลมให้ชัดขึ้น */
         .stock-logo {
-            width: 55px;
-            height: 55px;
+            width: 55px; height: 55px;
             border-radius: 50%;
             background-color: #fff;
             margin-right: 18px;
-            object-fit: contain; /* ปรับให้รูปอยู่ตรงกลางไม่บิดเบี้ยว */
-            padding: 5px; /* เว้นขอบในให้รูปไม่ชิดขอบวงกลมเกินไป */
+            object-fit: contain;
+            padding: 5px;
             border: 2px solid #333;
             box-sizing: border-box;
         }
@@ -90,12 +111,9 @@
         .current-price { font-size: 24px; font-weight: bold; }
 
         .chart-container { 
-            height: 450px; 
-            width: 100%;
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 1px solid #222;
-            background: #000;
+            height: 450px; width: 100%;
+            border-radius: 20px; overflow: hidden; 
+            border: 1px solid #222; background: #000;
             margin-top: 20px;
         }
 
@@ -116,27 +134,22 @@
         <div id="total-thb" style="color: var(--text-dim); font-size: 20px; margin-top: 5px;">฿0.00 THB</div>
         
         <div class="summary-row">
-            <div>
-                <small>ต้นทุนรวม</small>
-                <div id="total-cost-display" style="font-size: 20px; font-weight:bold; margin-top:5px;">$0.00</div>
-            </div>
-            <div>
-                <small>กำไร/ขาดทุน</small>
-                <div id="total-profit" class="profit" style="font-size: 20px; font-weight:bold; margin-top:5px;">+$0.00</div>
-            </div>
-            <div>
-                <small>% กำไร</small>
-                <div id="total-pc" class="profit" style="font-size: 20px; font-weight:bold; margin-top:5px;">+0.00%</div>
-            </div>
+            <div><small>ต้นทุนรวม</small><div id="total-cost-display" style="font-size: 20px; font-weight:bold; margin-top:5px;">$0.00</div></div>
+            <div><small>กำไร/ขาดทุน</small><div id="total-profit" class="profit" style="font-size: 20px; font-weight:bold; margin-top:5px;">+$0.00</div></div>
+            <div><small>% กำไร</small><div id="total-pc" class="profit" style="font-size: 20px; font-weight:bold; margin-top:5px;">+0.00%</div></div>
         </div>
     </div>
 
-    <h3 style="margin-left: 10px;">รายการสินทรัพย์ (รายตัว)</h3>
+    <div class="sort-controls">
+        <button class="sort-btn active" onclick="changeSort('default')">ค่าเริ่มต้น</button>
+        <button class="sort-btn" onclick="changeSort('profit')">เรียงตามกำไร</button>
+        <button class="sort-btn" onclick="changeSort('cost')">เรียงตามเงินต้น</button>
+    </div>
+
     <div id="stock-list"></div>
 </div>
 
 <script>
-    // ปรับ Domain ให้ตรงกับแหล่งที่เก็บ Logo ของแต่ละบริษัท
     const MY_PORTFOLIO = [
         { symbol: "NVDA", shares: 0.0742317, cost: 15.11, domain: "nvidia.com" },
         { symbol: "MSFT", shares: 0.0072341, cost: 3.07, domain: "microsoft.com" },
@@ -147,6 +160,14 @@
 
     const API_KEY = 'd7npjg1r01qm3637bb2gd7npjg1r01qm3637bb30';
     let current_usd_thb = 32.29;
+    let currentSort = 'default'; // default, profit, cost
+
+    function changeSort(type) {
+        currentSort = type;
+        document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        updatePortfolio(); // สั่งเรนเดอร์ใหม่ตามลำดับที่เลือก
+    }
 
     async function getLivePrice(symbol) {
         try {
@@ -163,25 +184,42 @@
         const rate = await getLivePrice("OANDA:USD_THB");
         if (rate) current_usd_thb = rate;
         
+        let displayData = [];
         let totalUSDValue = 0;
         let totalCostAmount = 0;
-        let htmlContent = "";
 
+        // 1. ดึงข้อมูลและคำนวณทั้งหมดก่อน
         for (const stock of MY_PORTFOLIO) {
             const currentPrice = await getLivePrice(stock.symbol);
             if (!currentPrice) continue;
 
             const currentValue = currentPrice * stock.shares;
             const costAmount = stock.cost;
-            const profit = currentValue - costAmount;
-            const pc = ((currentValue - costAmount) / costAmount) * 100;
+            const profitValue = currentValue - costAmount;
+            const profitPC = (profitValue / costAmount) * 100;
 
             totalUSDValue += currentValue;
             totalCostAmount += costAmount;
 
-            // ใช้ Google Logo API ซึ่งเสถียรกว่ามาก
-            const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${stock.domain}`;
+            displayData.push({
+                ...stock,
+                currentValue,
+                profitValue,
+                profitPC
+            });
+        }
 
+        // 2. เรียงลำดับข้อมูล
+        if (currentSort === 'profit') {
+            displayData.sort((a, b) => b.profitValue - a.profitValue);
+        } else if (currentSort === 'cost') {
+            displayData.sort((a, b) => b.cost - a.cost);
+        }
+
+        // 3. เรนเดอร์ HTML
+        let htmlContent = "";
+        displayData.forEach(stock => {
+            const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${stock.domain}`;
             htmlContent += `
                 <div class="stock-item">
                     <div class="stock-header">
@@ -193,24 +231,25 @@
                             </div>
                         </div>
                         <div class="price-info">
-                            <div class="current-price">$${currentValue.toFixed(2)}</div>
-                            <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-weight:bold;">
-                                ${pc >= 0 ? '↗' : '↘'} ${Math.abs(pc).toFixed(2)}% ($${profit.toFixed(2)})
+                            <div class="current-price">$${stock.currentValue.toFixed(2)}</div>
+                            <div class="${stock.profitValue >= 0 ? 'profit' : 'loss'}" style="font-weight:bold;">
+                                ${stock.profitPC >= 0 ? '↗' : '↘'} ${Math.abs(stock.profitPC).toFixed(2)}% ($${stock.profitValue.toFixed(2)})
                             </div>
                         </div>
                     </div>
                     <div class="chart-container" id="container-${stock.symbol}"></div>
                 </div>
             `;
-        }
+        });
 
         list.innerHTML = htmlContent;
 
+        // อัปเดตส่วนหัว
         const totalProfit = totalUSDValue - totalCostAmount;
         const totalPC = totalCostAmount > 0 ? (totalProfit / totalCostAmount) * 100 : 0;
 
         document.getElementById('total-usd').innerText = `$${totalUSDValue.toFixed(2)}`;
-        document.getElementById('total-thb').innerText = `฿${(totalUSDValue * current_usd_thb).toLocaleString(undefined, {minimumFractionDigits: 2})} THB (Rate: ${current_usd_thb.toFixed(2)})`;
+        document.getElementById('total-thb').innerText = `฿${(totalUSDValue * current_usd_thb).toLocaleString(undefined, {minimumFractionDigits: 2})} THB`;
         document.getElementById('total-cost-display').innerText = `$${totalCostAmount.toFixed(2)}`;
         document.getElementById('total-profit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
         document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
@@ -218,7 +257,8 @@
         document.getElementById('total-profit').className = totalProfit >= 0 ? 'profit' : 'loss';
         document.getElementById('total-pc').className = totalProfit >= 0 ? 'profit' : 'loss';
 
-        MY_PORTFOLIO.forEach(stock => {
+        // โหลดกราฟ
+        displayData.forEach(stock => {
             new TradingView.widget({
                 "autosize": true,
                 "symbol": "NASDAQ:" + stock.symbol,
