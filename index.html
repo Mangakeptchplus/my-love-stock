@@ -40,7 +40,6 @@
 
         .total-val { font-size: clamp(40px, 8vw, 60px); font-weight: 800; margin: 10px 0; letter-spacing: -2px; }
         
-        /* สรุปยอด 3 ช่อง */
         .summary-row { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -119,7 +118,9 @@
 </div>
 
 <script>
-    // --- แก้ไขจำนวนหุ้นและต้นทุนของคุณตรงนี้ ---
+    // --- แก้ไขตรงนี้ครับ ---
+    // cost: คือจำนวนเงินดอลลาร์ที่คุณจ่ายซื้อไปจริงๆ (เช่น 15.11)
+    // shares: คือจำนวนหุ้นที่คุณได้รับมา (เช่น 0.0742317)
     const MY_PORTFOLIO = [
         { symbol: "NVDA", shares: 0.0742317, cost: 15.11 },
         { symbol: "MSFT", shares: 0.0072341, cost: 3.07 },
@@ -129,16 +130,14 @@
     ];
 
     const API_KEY = 'd7npjg1r01qm3637bb2gd7npjg1r01qm3637bb30';
-    let current_usd_thb = 32.29; // ค่าเริ่มต้นสำรอง
+    let current_usd_thb = 32.29;
 
-    // ฟังก์ชันดึงราคาหุ้นหรืออัตราแลกเปลี่ยน
     async function getLivePrice(symbol) {
         try {
             const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`);
             const data = await response.json();
-            return data.c; // ราคาล่าสุด
+            return data.c;
         } catch (e) {
-            console.error("Error fetching price for " + symbol, e);
             return null;
         }
     }
@@ -147,38 +146,34 @@
         const list = document.getElementById('stock-list');
         const status = document.getElementById('update-status');
         
-        // 1. ดึงอัตราแลกเปลี่ยน USD/THB ล่าสุดก่อน
         const rate = await getLivePrice("OANDA:USD_THB");
-        if (rate) {
-            current_usd_thb = rate;
-        }
+        if (rate) current_usd_thb = rate;
         
-        let totalUSD = 0;
-        let totalCost = 0;
+        let totalUSDValue = 0;
+        let totalCostAmount = 0; // ยอดรวมเงินต้น
         let htmlContent = "";
 
-        // 2. ดึงราคาหุ้นแต่ละตัว
         for (const stock of MY_PORTFOLIO) {
             const currentPrice = await getLivePrice(stock.symbol);
             if (!currentPrice) continue;
 
-            const value = currentPrice * stock.shares;
-            const costTotal = stock.cost * stock.shares;
-            const profit = value - costTotal;
-            const pc = ((currentPrice - stock.cost) / stock.cost) * 100;
+            const currentValue = currentPrice * stock.shares; // มูลค่าตลาดตอนนี้
+            const costAmount = stock.cost; // เงินต้นที่คุณจ่ายไป (ค่าจากตัวแปร cost ตรงๆ)
+            const profit = currentValue - costAmount;
+            const pc = ((currentValue - costAmount) / costAmount) * 100;
 
-            totalUSD += value;
-            totalCost += costTotal;
+            totalUSDValue += currentValue;
+            totalCostAmount += costAmount; // บวกเงินต้นเข้าไปตรงๆ ตามที่คุณต้องการ
 
             htmlContent += `
                 <div class="stock-item">
                     <div class="stock-header">
                         <div>
                             <div class="symbol-name">${stock.symbol}</div>
-                            <small>${stock.shares} หุ้น | ต้นทุนเฉลี่ย $${stock.cost}</small>
+                            <small>${stock.shares} หุ้น | เงินต้น $${stock.cost}</small>
                         </div>
                         <div class="price-info">
-                            <div class="current-price">$${value.toFixed(2)}</div>
+                            <div class="current-price">$${currentValue.toFixed(2)}</div>
                             <div class="${profit >= 0 ? 'profit' : 'loss'}" style="font-weight:bold;">
                                 ${pc >= 0 ? '↗' : '↘'} ${Math.abs(pc).toFixed(2)}% ($${profit.toFixed(2)})
                             </div>
@@ -191,22 +186,21 @@
 
         list.innerHTML = htmlContent;
 
-        // 3. อัปเดตส่วนสรุปยอดด้านบน
-        const totalProfit = totalUSD - totalCost;
-        const totalPC = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+        const totalProfit = totalUSDValue - totalCostAmount;
+        const totalPC = (totalProfit / totalCostAmount) * 100;
 
-        document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
-        // ใช้ค่าอัตราแลกเปลี่ยนที่ดึงมาล่าสุด
-        document.getElementById('total-thb').innerText = `฿${(totalUSD * current_usd_thb).toLocaleString(undefined, {minimumFractionDigits: 2})} THB (Rate: ${current_usd_thb.toFixed(2)})`;
+        document.getElementById('total-usd').innerText = `$${totalUSDValue.toFixed(2)}`;
+        document.getElementById('total-thb').innerText = `฿${(totalUSDValue * current_usd_thb).toLocaleString(undefined, {minimumFractionDigits: 2})} THB (Rate: ${current_usd_thb.toFixed(2)})`;
         
-        document.getElementById('total-cost-display').innerText = `$${totalCost.toFixed(2)}`;
+        // แสดงต้นทุนรวมแบบเอา "เงินต้นแต่ละตัว" มาบวกกัน
+        document.getElementById('total-cost-display').innerText = `$${totalCostAmount.toFixed(2)}`;
+        
         document.getElementById('total-profit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
         document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
         
         document.getElementById('total-profit').className = totalProfit >= 0 ? 'profit' : 'loss';
         document.getElementById('total-pc').className = totalProfit >= 0 ? 'profit' : 'loss';
 
-        // 4. โหลดกราฟ TradingView
         MY_PORTFOLIO.forEach(stock => {
             new TradingView.widget({
                 "autosize": true,
@@ -225,7 +219,6 @@
     }
 
     updatePortfolio();
-    // อัปเดตทุก 60 วินาที
     setInterval(updatePortfolio, 60000);
 </script>
 
