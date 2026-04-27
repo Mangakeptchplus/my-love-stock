@@ -63,11 +63,27 @@
         .stock-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 20px;
         }
 
-        .symbol-name { font-size: 28px; font-weight: bold; color: var(--accent-green); }
+        /* ตกแต่งโลโก้วงกลม */
+        .stock-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #fff;
+            margin-right: 15px;
+            object-fit: contain;
+            border: 2px solid #333;
+        }
+
+        .symbol-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .symbol-name { font-size: 28px; font-weight: bold; color: var(--accent-green); line-height: 1.1; }
         .price-info { text-align: right; }
         .current-price { font-size: 24px; font-weight: bold; }
 
@@ -118,15 +134,13 @@
 </div>
 
 <script>
-    // --- แก้ไขตรงนี้ครับ ---
-    // cost: คือจำนวนเงินดอลลาร์ที่คุณจ่ายซื้อไปจริงๆ (เช่น 15.11)
-    // shares: คือจำนวนหุ้นที่คุณได้รับมา (เช่น 0.0742317)
+    // เพิ่ม domain เพื่อใช้ดึงโลโก้ครับ
     const MY_PORTFOLIO = [
-        { symbol: "NVDA", shares: 0.0742317, cost: 15.11 },
-        { symbol: "MSFT", shares: 0.0072341, cost: 3.07 },
-        { symbol: "AAPL", shares: 0.0113922, cost: 3.08 },
-        { symbol: "AMZN", shares: 0.0061046, cost: 1.54 },
-        { symbol: "ALAB", shares: 0.0077574, cost: 1.54 }
+        { symbol: "NVDA", shares: 0.0742317, cost: 15.11, domain: "nvidia.com" },
+        { symbol: "MSFT", shares: 0.0072341, cost: 3.07, domain: "microsoft.com" },
+        { symbol: "AAPL", shares: 0.0113922, cost: 3.08, domain: "apple.com" },
+        { symbol: "AMZN", shares: 0.0061046, cost: 1.54, domain: "amazon.com" },
+        { symbol: "ALAB", shares: 0.0077574, cost: 1.54, domain: "asteralabs.com" }
     ];
 
     const API_KEY = 'd7npjg1r01qm3637bb2gd7npjg1r01qm3637bb30';
@@ -137,9 +151,7 @@
             const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`);
             const data = await response.json();
             return data.c;
-        } catch (e) {
-            return null;
-        }
+        } catch (e) { return null; }
     }
 
     async function updatePortfolio() {
@@ -150,27 +162,30 @@
         if (rate) current_usd_thb = rate;
         
         let totalUSDValue = 0;
-        let totalCostAmount = 0; // ยอดรวมเงินต้น
+        let totalCostAmount = 0;
         let htmlContent = "";
 
         for (const stock of MY_PORTFOLIO) {
             const currentPrice = await getLivePrice(stock.symbol);
             if (!currentPrice) continue;
 
-            const currentValue = currentPrice * stock.shares; // มูลค่าตลาดตอนนี้
-            const costAmount = stock.cost; // เงินต้นที่คุณจ่ายไป (ค่าจากตัวแปร cost ตรงๆ)
+            const currentValue = currentPrice * stock.shares;
+            const costAmount = stock.cost;
             const profit = currentValue - costAmount;
             const pc = ((currentValue - costAmount) / costAmount) * 100;
 
             totalUSDValue += currentValue;
-            totalCostAmount += costAmount; // บวกเงินต้นเข้าไปตรงๆ ตามที่คุณต้องการ
+            totalCostAmount += costAmount;
 
             htmlContent += `
                 <div class="stock-item">
                     <div class="stock-header">
-                        <div>
-                            <div class="symbol-name">${stock.symbol}</div>
-                            <small>${stock.shares} หุ้น | เงินต้น $${stock.cost}</small>
+                        <div class="symbol-info">
+                            <img class="stock-logo" src="https://logo.clearbit.com/${stock.domain}" onerror="this.src='https://ui-avatars.com/api/?name=${stock.symbol}&background=00ff41&color=fff'">
+                            <div>
+                                <div class="symbol-name">${stock.symbol}</div>
+                                <small>${stock.shares} หุ้น | เงินต้น $${stock.cost}</small>
+                            </div>
                         </div>
                         <div class="price-info">
                             <div class="current-price">$${currentValue.toFixed(2)}</div>
@@ -187,14 +202,11 @@
         list.innerHTML = htmlContent;
 
         const totalProfit = totalUSDValue - totalCostAmount;
-        const totalPC = (totalProfit / totalCostAmount) * 100;
+        const totalPC = totalCostAmount > 0 ? (totalProfit / totalCostAmount) * 100 : 0;
 
         document.getElementById('total-usd').innerText = `$${totalUSDValue.toFixed(2)}`;
         document.getElementById('total-thb').innerText = `฿${(totalUSDValue * current_usd_thb).toLocaleString(undefined, {minimumFractionDigits: 2})} THB (Rate: ${current_usd_thb.toFixed(2)})`;
-        
-        // แสดงต้นทุนรวมแบบเอา "เงินต้นแต่ละตัว" มาบวกกัน
         document.getElementById('total-cost-display').innerText = `$${totalCostAmount.toFixed(2)}`;
-        
         document.getElementById('total-profit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
         document.getElementById('total-pc').innerText = `${totalPC >= 0 ? '+' : ''}${totalPC.toFixed(2)}%`;
         
